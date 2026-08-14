@@ -15,12 +15,16 @@ import time
 
 import usb.core
 import usb.util
+import usb.backend.libusb1
+import libusb
 
 VID = 0x2CA3
 PID = 0x1021
 
+_backend = usb.backend.libusb1.get_backend(find_library=lambda x: libusb.dll._name)
+
 def find_device():
-    dev = usb.core.find(idVendor=VID, idProduct=PID)
+    dev = usb.core.find(idVendor=VID, idProduct=PID, backend=_backend)
     if dev is None:
         print(f"Device {VID:04x}:{PID:04x} not found. Is it plugged in (bottom USB-C port) and powered on?")
         sys.exit(1)
