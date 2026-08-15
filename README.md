@@ -1,6 +1,26 @@
 # DJI RC Motion Controller → PC Bridge (WIP)
 
-**Status: reverse-engineering in progress. Not working yet.**
+**Status: reverse-engineering in progress. Trigger axis decoded; gesture
+axes not yet located.**
+
+### What works
+
+The DUML protocol is now understood well enough to build arbitrary valid
+packets and talk to the device, and the **trigger is fully decoded** as a
+proportional analog axis. See [FINDINGS.md](FINDINGS.md) for the corrected
+header layout, verified CRC8/CRC16 implementations, and the channel-query
+command. `poll_channels.py` reads the trigger live.
+
+The gesture/IMU axes are still missing — they are not exposed on the
+channel set that carries the trigger, even with the trigger held down.
+
+### ⚠ Read this before probing
+
+Blind-sweeping the DUML command space **wedged the controller** used for
+this research — it went dark and would not power back on. `CMD_SET=0x00`
+(GENERAL) contains reboot, firmware-upgrade and encryption commands. See
+the HAZARD section in [FINDINGS.md](FINDINGS.md) before sending anything
+you have not looked up first.
 
 No existing open-source tool turns a DJI RC Motion Controller into a PC game
 controller. This repo is an attempt to build one, from scratch, since the
