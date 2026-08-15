@@ -48,6 +48,29 @@ pulled / buttons pressed.** So this specific subscribe command enables
 *something* (possibly just a heartbeat-ack channel), but not the actual
 IMU/trigger telemetry stream.
 
+## Device identity confirmed
+
+Physical hardware: **DJI RC Motion 3**. Windows records it as a composite
+device with (at least) 3 interfaces, though only one is currently active:
+
+| Interface | Class | Status |
+|---|---|---|
+| MI_00 | `libusb-win32 devices` (bulk) | **Active** — this is what `probe.py` talks to |
+| MI_01 | WPD (media transfer / file access) | Phantom — seen in a past session, not currently enumerating |
+| MI_02 | **ADB Interface** (Android Debug Bridge!) | Phantom — same |
+
+The phantom MI_01/MI_02 records carry a real device serial
+(`6UZTP15001UDX1`), while the currently-active MI_00 connection reports a
+placeholder-looking serial (`123456789FEDCBA`) — hints the controller may
+expose ADB only in a different connection mode/state than whatever we're
+currently triggering by plain USB-C plug-in. Not yet reproduced.
+
+**If ADB access can be reproduced**, it changes the whole approach: `adb
+shell` / `logcat` on the device's internal Android system could expose
+IMU/trigger/button state directly (DJI RC hardware commonly runs Android
+internally), sidestepping the raw-USB-protocol reverse-engineering entirely.
+Worth chasing before going deeper on the DUML brute-force route.
+
 ## Next steps (not yet done)
 
 The real gesture-data channel almost certainly needs a **different**
