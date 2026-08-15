@@ -99,11 +99,32 @@ press.
 
 The device still enumerated on USB the whole time (`2CA3:1021` present in a
 full `pyusb` device listing), so it was not electrically damaged — data
-commands over the bulk endpoint cannot do that. The likely cause is that
-the blind sweep hit a power-off / reboot / enter-bootloader command. DUML
-has several in that space, e.g. `CMD_SET=0x00 CMD_ID=0x0b` is documented as
-**Chip Reboot**, plus firmware-upgrade and encryption commands around
-`0x30`.
+commands over the bulk endpoint cannot do that.
+
+**Two explanations remain open, and they were not distinguished:**
+
+1. *Firmware wedge.* The sweep may have hit a power-off / reboot /
+   enter-bootloader command. DUML has several in that space, e.g.
+   `CMD_SET=0x00 CMD_ID=0x0b` is documented as **Chip Reboot**, plus
+   firmware-upgrade and encryption commands around `0x30`.
+2. *Flat battery.* The controller had been powered on for hours of
+   continuous polling, and a laptop USB port can fail to net-charge an
+   actively running device. It had also **switched itself off** before the
+   first power-cycle attempt, which is what low-battery auto-shutdown looks
+   like. Deep-discharged packs commonly show no LED at all and refuse the
+   power button until they have taken real charge.
+
+Note that USB enumeration does **not** prove the main system is alive:
+descriptor-level enumeration can run on bus power from a separate always-on
+USB controller while the main SoC is down. The same applies to DJI
+Assistant 2 showing the device name but never loading a firmware version —
+that fits "cannot boot" as well as "in bootloader".
+
+Before assuming a wedge, charge the device properly from a wall charger
+(not a PC port) overnight. That is the cheap discriminator.
+
+The hazard guidance below stands either way — blind-sweeping an unknown
+command space on hardware you cannot restore is not worth the risk.
 
 **Rules going forward:**
 - Never sweep `CMD_SET=0x00` (GENERAL) blindly — that is where reboot,
