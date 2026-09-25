@@ -1,7 +1,9 @@
 # Reverse-engineering findings — DJI RC Motion 3
 
-**Status: trigger axis decoded and working. Gesture/IMU axes still not
-located.**
+**Status: trigger axis decoded. Gesture/IMU axes not located. HARDWARE
+BLOCKED as of 2026-08-16 — the controller used for this research will no
+longer power on and needs service-level firmware recovery from DJI. See
+"Final diagnostic state" below before repeating any of this work.**
 
 ## Setup
 - VID:PID `2CA3:1021`, must be rebound from `libusb-win32` to **WinUSB** via
@@ -123,6 +125,39 @@ that fits "cannot boot" as well as "in bootloader".
 Before assuming a wedge, charge the device properly from a wall charger
 (not a PC port) overnight. That is the cheap discriminator.
 
+
+### Final diagnostic state (2026-08-16) — self-recovery exhausted
+
+The overnight wall-charge test was run and **did not revive the device**,
+which substantially weakens the flat-battery explanation.
+
+| Avenue | Result |
+|---|---|
+| Overnight charge, proper wall charger | ❌ no change |
+| 20-30s hard power press | ❌ no change |
+| USB enumeration | ✅ `2CA3:1021` present, interface 0 `EP 0x01`/`0x81` + endpointless interface 1 — identical topology to when it worked |
+| DUML response to the known-good channel query | ❌ silent (tested while WinUSB was still bound, minutes after it had been answering reliably) |
+| DJI Assistant 2 detects device | ✅ by name |
+| Assistant 2 loads firmware version | ❌ never loads, indefinite spinner |
+| Correct Assistant 2 variant | ✅ confirmed — `DJI Assistant 2 (Consumer Drones Series)` installed under `C:\Program Files (x86)\DJI Product\`, which is the right build for the RC Motion 3 / Avata 2 / Goggles 3 / O4 line |
+| Goggles on the same Assistant 2 install | ✅ report their own firmware normally, ruling out a login / internet / app-side fault |
+
+**Reading button or trigger state is not possible in this condition.** That
+data comes from the main firmware, and the firmware is not answering DUML at
+all. Re-binding to WinUSB to retry would only reconfirm the silence already
+observed, while temporarily blocking Assistant 2 — not worth doing.
+
+Note the driver binding is a straight either/or: `pyusb` work needs WinUSB
+(via Zadig), DJI Assistant 2 needs DJI's own driver. Swap with
+Device Manager → Uninstall device → tick "attempt to remove the driver" →
+replug. Windows also reverts the WinUSB binding on its own sometimes.
+
+**Conclusion: this requires service-level firmware recovery from DJI.** A
+device that enumerates cleanly, is detected by the correct tooling, yet
+never reports a firmware version and will not boot, is past what can be
+fixed host-side. Report it to DJI support as *"controller won't power on;
+DJI Assistant 2 (Consumer Drones Series) detects it but the firmware
+version never loads."*
 The hazard guidance below stands either way — blind-sweeping an unknown
 command space on hardware you cannot restore is not worth the risk.
 
